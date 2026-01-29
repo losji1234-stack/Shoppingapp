@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Shoppingliste App</title>
+
+  <!-- ✅ PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- ✅ iPhone ikon -->
+  <link rel="apple-touch-icon" href="cart.png">
+
+  <meta name="theme-color" content="#2d6cdf">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #101820;
+      color: white;
+      margin: 0;
+      padding: 0;
+    }
+
+    .wrap {
+      max-width: 600px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    .card {
+      background: #1b263b;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.4);
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      border-radius: 10px;
+      border: none;
+      font-size: 15px;
+    }
+
+    button {
+      padding: 10px 14px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 10px;
+      background: #2d6cdf;
+      color: white;
+    }
+
+    .item {
+      background: #0f172a;
+      padding: 12px;
+      border-radius: 12px;
+      margin-top: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .item.done span {
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
+
+    .delete {
+      background: #c0392b;
+      padding: 6px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-left: 8px;
+    }
+
+    .check {
+      transform: scale(1.4);
+      margin-right: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>🛒 Shoppingliste</h1>
+      <p>Skriv dine varer og kryds dem af når de er købt.</p>
+
+      <input id="itemInput" placeholder="Vare (fx mælk)" />
+      <input id="amountInput" type="number" placeholder="Antal (fx 2)" />
+
+      <button onclick="addItem()">➕ Tilføj vare</button>
+
+      <h2 style="margin-top:20px;">✅ Liste</h2>
+      <div id="list"></div>
+    </div>
+  </div>
+
+  <script>
+    // ✅ Load items from localStorage
+    let items = JSON.parse(localStorage.getItem("shopping")) || [];
+
+    function saveItems() {
+      localStorage.setItem("shopping", JSON.stringify(items));
+    }
+
+    function renderList() {
+      const list = document.getElementById("list");
+      list.innerHTML = "";
+
+      if (items.length === 0) {
+        list.innerHTML = "<p>Ingen varer endnu 🎉</p>";
+      }
+
+      items.forEach((item, index) => {
+        const div = document.createElement("div");
+        div.className = "item";
+        if (item.done) div.classList.add("done");
+
+        div.innerHTML = `
+          <label style="display:flex; align-items:center; flex:1;">
+            <input class="check" type="checkbox"
+              ${item.done ? "checked" : ""}
+              onchange="toggleDone(${index})">
+            <span><b>${item.name}</b> (x${item.amount})</span>
+          </label>
+
+          <span class="delete" onclick="deleteItem(${index})">X</span>
+        `;
+
+        list.appendChild(div);
+      });
+    }
+
+    function addItem() {
+      const name = document.getElementById("itemInput").value.trim();
+      const amount = document.getElementById("amountInput").value.trim();
+
+      if (name === "") {
+        alert("Skriv en vare!");
+        return;
+      }
+
+      items.push({
+        name,
+        amount: amount || 1,
+        done: false
+      });
+
+      saveItems();
+      renderList();
+
+      document.getElementById("itemInput").value = "";
+      document.getElementById("amountInput").value = "";
+    }
+
+    function toggleDone(index) {
+      items[index].done = !items[index].done;
+      saveItems();
+      renderList();
+    }
+
+    function deleteItem(index) {
+      items.splice(index, 1);
+      saveItems();
+      renderList();
+    }
+
+    renderList();
+
+    // ✅ Service Worker (PWA)
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("service-worker.js");
+    }
+  </script>
+</body>
+</html>
